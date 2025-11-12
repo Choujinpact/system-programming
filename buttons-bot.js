@@ -60,7 +60,7 @@ bot.action('settings_btn', (ctx) => {
 
 bot.action('contact_btn', (ctx) => {
   ctx.reply(
-    '📞 Связь с разработчиком:\n\nEmail: example@mail.com\nTelegram: @username'
+    '📞 Связь с разработчиком:\n\nEmail: example@mail.com\nTelegram: @@Choujinpact'
   )
   ctx.answerCbQuery()
 })

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Планирование процессов</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      .process-row {
+        cursor: pointer;
+      }
+      .process-row:hover {
+        background-color: #f9f9f9;
+      }
+      .comparison {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+      }
+      .algorithm {
+        flex: 1;
+        margin: 0 10px;
+      }
+      .metrics {
+        background: #e8f4fd;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+      .improvement {
+        color: green;
+        font-weight: bold;
+      }
+      .worse {
+        color: red;
+        font-weight: bold;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .input-section {
+        margin-bottom: 20px;
+      }
+      .input-group {
+        margin: 10px 0;
+      }
+      input {
+        padding: 5px;
+        margin: 0 5px;
+        width: 60px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Планирование процессов</h1>
+
+      <div class="input-section">
+        <h3>Добавить процесс:</h3>
+        <div class="input-group">
+          <input
+            type="text"
+            id="processName"
+            placeholder="Имя процесса"
+            value="P1"
+          />
+          <input type="number" id="processTime" placeholder="Время" value="5" />
+          <input
+            type="number"
+            id="processPriority"
+            placeholder="Приоритет"
+            value="2"
+          />
+          <button onclick="addProcess()">Добавить процесс</button>
+          <button onclick="resetProcesses()">Сбросить</button>
+        </div>
+      </div>
+
+      <div class="comparison">
+        <div class="algorithm">
+          <h2>FIFO (First-In-First-Out)</h2>
+          <div id="fifoResults"></div>
+          <div id="fifoMetrics" class="metrics"></div>
+        </div>
+
+        <div class="algorithm">
+          <h2>SJF (Shortest Job First)</h2>
+          <div id="sjfResults"></div>
+          <div id="sjfMetrics" class="metrics"></div>
+        </div>
+      </div>
+
+      <div class="container">
+        <h2>Сравнение алгоритмов</h2>
+        <div id="comparisonResults"></div>
+      </div>
+    </div>
+
+    <script>
+      // Исходные данные процессов
+      let processes = [
+        { name: 'P1', time: 5, priority: 2 },
+        { name: 'P2', time: 3, priority: 1 },
+        { name: 'P3', time: 8, priority: 3 },
+        { name: 'P4', time: 6, priority: 2 },
+      ]
+
+      // Функция для добавления процесса
+      function addProcess() {
+        const name = document.getElementById('processName').value
+        const time = parseInt(document.getElementById('processTime').value)
+        const priority = parseInt(
+          document.getElementById('processPriority').value
+        )
+
+        if (name && time > 0) {
+          processes.push({ name, time, priority })
+          calculateAll()
+        }
+      }
+
+      // Функция сброса процессов
+      function resetProcesses() {
+        processes = [
+          { name: 'P1', time: 5, priority: 2 },
+          { name: 'P2', time: 3, priority: 1 },
+          { name: 'P3', time: 8, priority: 3 },
+          { name: 'P4', time: 6, priority: 2 },
+        ]
+        calculateAll()
+      }
+
+      // FIFO алгоритм
+      function calculateFIFO() {
+        let currentTime = 0
+        const results = []
+        const metrics = {
+          waitingTimes: {},
+          turnaroundTimes: {},
+          responseTimes: {},
+        }
+
+        processes.forEach((process) => {
+          const startTime = currentTime
+          const endTime = currentTime + process.time
+
+          results.push({
+            process: process.name,
+            startTime,
+            endTime,
+            waitingTime: startTime,
+            turnaroundTime: endTime,
+            responseTime: endTime,
+          })
+
+          metrics.waitingTimes[process.name] = startTime
+          metrics.turnaroundTimes[process.name] = endTime
+          metrics.responseTimes[process.name] = endTime
+
+          currentTime = endTime
+        })
+
+        return { results, metrics }
+      }
+
+      // SJF алгоритм
+      function calculateSJF() {
+        // Сортируем процессы по времени выполнения
+        const sortedProcesses = [...processes].sort((a, b) => a.time - b.time)
+        let currentTime = 0
+        const results = []
+        const metrics = {
+          waitingTimes: {},
+          turnaroundTimes: {},
+          responseTimes: {},
+        }
+
+        sortedProcesses.forEach((process) => {
+          const startTime = currentTime
+          const endTime = currentTime + process.time
+
+          results.push({
+            process: process.name,
+            startTime,
+            endTime,
+            waitingTime: startTime,
+            turnaroundTime: endTime,
+            responseTime: endTime,
+          })
+
+          metrics.waitingTimes[process.name] = startTime
+          metrics.turnaroundTimes[process.name] = endTime
+          metrics.responseTimes[process.name] = endTime
+
+          currentTime = endTime
+        })
+
+        return { results, metrics }
+      }
+
+      // Расчет средних значений
+      function calculateAverages(metrics) {
+        const waitingTimes = Object.values(metrics.waitingTimes)
+        const turnaroundTimes = Object.values(metrics.turnaroundTimes)
+        const responseTimes = Object.values(metrics.responseTimes)
+
+        return {
+          avgWaiting:
+            waitingTimes.reduce((a, b) => a + b, 0) / waitingTimes.length,
+          avgTurnaround:
+            turnaroundTimes.reduce((a, b) => a + b, 0) / turnaroundTimes.length,
+          avgResponse:
+            responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length,
+        }
+      }
+
+      // Отображение результатов
+      function displayResults(
+        algorithm,
+        results,
+        metrics,
+        elementId,
+        metricsElementId
+      ) {
+        const averages = calculateAverages(metrics)
+
+        let html = '<table>'
+        html +=
+          '<tr><th>Процесс</th><th>Начало</th><th>Конец</th><th>Ожидание</th><th>Выполнение</th><th>Отклик</th></tr>'
+
+        results.forEach((result) => {
+          html += `<tr class="process-row">
+                    <td>${result.process}</td>
+                    <td>${result.startTime}</td>
+                    <td>${result.endTime}</td>
+                    <td>${result.waitingTime}</td>
+                    <td>${result.turnaroundTime}</td>
+                    <td>${result.responseTime}</td>
+                </tr>`
+        })
+        html += '</table>'
+
+        document.getElementById(elementId).innerHTML = html
+
+        let metricsHtml = `<h3>Средние значения:</h3>
+                <p>Время ожидания: <b>${averages.avgWaiting.toFixed(2)}</b></p>
+                <p>Время выполнения: <b>${averages.avgTurnaround.toFixed(
+                  2
+                )}</b></p>
+                <p>Время отклика: <b>${averages.avgResponse.toFixed(2)}</b></p>`
+
+        document.getElementById(metricsElementId).innerHTML = metricsHtml
+
+        return averages
+      }
+
+      // Сравнение алгоритмов
+      function compareAlgorithms(fifoAverages, sjfAverages) {
+        const improvementWaiting =
+          fifoAverages.avgWaiting - sjfAverages.avgWaiting
+        const improvementTurnaround =
+          fifoAverages.avgTurnaround - sjfAverages.avgTurnaround
+        const improvementResponse =
+          fifoAverages.avgResponse - sjfAverages.avgResponse
+
+        let html = '<table>'
+        html +=
+          '<tr><th>Метрика</th><th>FIFO</th><th>SJF</th><th>Изменение</th></tr>'
+
+        html += `<tr>
+                <td>Ср. время ожидания</td>
+                <td>${fifoAverages.avgWaiting.toFixed(2)}</td>
+                <td>${sjfAverages.avgWaiting.toFixed(2)}</td>
+                <td class="${improvementWaiting > 0 ? 'improvement' : 'worse'}">
+                    ${improvementWaiting > 0 ? '▼' : '▲'} ${Math.abs(
+          improvementWaiting
+        ).toFixed(2)}
+                </td>
+            </tr>`
+
+        html += `<tr>
+                <td>Ср. время выполнения</td>
+                <td>${fifoAverages.avgTurnaround.toFixed(2)}</td>
+                <td>${sjfAverages.avgTurnaround.toFixed(2)}</td>
+                <td class="${
+                  improvementTurnaround > 0 ? 'improvement' : 'worse'
+                }">
+                    ${improvementTurnaround > 0 ? '▼' : '▲'} ${Math.abs(
+          improvementTurnaround
+        ).toFixed(2)}
+                </td>
+            </tr>`
+
+        html += `<tr>
+                <td>Ср. время отклика</td>
+                <td>${fifoAverages.avgResponse.toFixed(2)}</td>
+                <td>${sjfAverages.avgResponse.toFixed(2)}</td>
+                <td class="${
+                  improvementResponse > 0 ? 'improvement' : 'worse'
+                }">
+                    ${improvementResponse > 0 ? '▼' : '▲'} ${Math.abs(
+          improvementResponse
+        ).toFixed(2)}
+                </td>
+            </tr>`
+
+        html += '</table>'
+
+        // Анализ
+        html +=
+          '<div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">'
+        html += '<h3>Анализ:</h3>'
+
+        if (improvementWaiting > 0) {
+          html +=
+            '<p>✅ SJF уменьшил среднее время ожидания на ' +
+            improvementWaiting.toFixed(2) +
+            '</p>'
+        } else {
+          html += '<p>❌ SJF увеличил среднее время ожидания</p>'
+        }
+
+        if (improvementTurnaround > 0) {
+          html +=
+            '<p>✅ SJF уменьшил среднее время выполнения на ' +
+            improvementTurnaround.toFixed(2) +
+            '</p>'
+        } else {
+          html += '<p>❌ SJF увеличил среднее время выполнения</p>'
+        }
+
+        html +=
+          '<p><b>Выиграли:</b> Короткие процессы (выполняются первыми)</p>'
+        html += '<p><b>Проиграли:</b> Длинные процессы (могут "голодать")</p>'
+        html += '</div>'
+
+        document.getElementById('comparisonResults').innerHTML = html
+      }
+
+      // Основная функция расчета
+      function calculateAll() {
+        const fifo = calculateFIFO()
+        const sjf = calculateSJF()
+
+        const fifoAverages = displayResults(
+          'FIFO',
+          fifo.results,
+          fifo.metrics,
+          'fifoResults',
+          'fifoMetrics'
+        )
+        const sjfAverages = displayResults(
+          'SJF',
+          sjf.results,
+          sjf.metrics,
+          'sjfResults',
+          'sjfMetrics'
+        )
+
+        compareAlgorithms(fifoAverages, sjfAverages)
+      }
+
+      // Запуск при загрузке
+      document.addEventListener('DOMContentLoaded', calculateAll)
+    </script>
+  </body>
+</html>
